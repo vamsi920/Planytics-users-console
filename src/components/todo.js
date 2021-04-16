@@ -4,12 +4,8 @@ import axios from 'axios';
 
 const Todo = props => (
     <tr>
-        <td>{props.todo.todo_description}</td>
-        <td>{props.todo.todo_responsible}</td>
-        <td>{props.todo.todo_priority}</td>
-        <td>
-            <Link to={"/edit/"+props.todo._id}>Edit</Link>
-        </td>
+        <td>{props.todo}</td>
+        
     </tr>
 )
 
@@ -17,23 +13,30 @@ export default class TodosList extends Component {
 
     constructor(props) {
         super(props);
-        this.state = {todos: []};
+        this.state = {
+            todos: [], 
+            todosList:[]
+        };
     }
 
     componentDidMount() {
         axios.get('http://localhost:4000/todos/')
             .then(response => {
-                console.log(response.data);
-                this.setState({ todos: response.data });
+                
+                this.setState({ todos: response.data }, ()=>{
+                    this.state.todos.map((a)=>{console.log(a.properties.todo);})
+                    
+                });
             })
             .catch(function (error){
                 console.log(error);
             })
+            console.log(this.state.todosList)
     }
 
     todoList() {
-        return this.state.todos.map(function(currentTodo, i){
-            return <Todo todo={currentTodo} key={i} />;
+        return this.state.todosList.map(function(currentTodo, i){
+            return <Todo todo={currentTodo.properties.todo} key={i} />;
         })
     }
 
@@ -45,9 +48,6 @@ export default class TodosList extends Component {
                     <thead>
                         <tr>
                             <th>Description</th>
-                            <th>Responsible</th>
-                            <th>Priority</th>
-                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>

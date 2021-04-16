@@ -5,74 +5,40 @@ const cors = require('cors');
 const PORT = process.env.PORT || 4000;
 const todoRoutes = express.Router();
 const Todo = require('./todo.js');
-const mongoose = require("mongoose");
+
+var neo4j = require('neo4j-driver')
+const driver = neo4j.driver("bolt://localhost:7687", neo4j.auth.basic("neo4j", "todo"))
 app.use(cors());
 app.use(bodyParser.json());
 
-todoRoutes.route('/').get(function(req, res) {
-    Todo.find(function(err, todos) {
-        if (err) {
-            console.log(err);
-        } else {
-            res.json(todos);
-        }
-    });
+todoRoutes.route('/').get(async function (req, res) {
+    const session = driver.session();
+    const result = await session.run(
+        `
+        MATCH (n:TODO) RETURN n
+      `);
+  
+      res.send(result.records.map((record) => record.get("n")));
+  
+      await session.close();
 });
-todoRoutes.route('/:id').get(function(req, res) {
-    let id = req.params.id;
-    Todo.findById(id, function(err, todo) {
-        res.json(todo);
-    });
-});
-todoRoutes.route('/add').post(function(req, res) {
+todoRoutes.route('/add').post(async function(req, res) {
     let todo = new Todo(req.body);
-    todo.save()
-        .then(todo => {
-            res.status(200).json({'todo': 'todo added successfully'});
-        })
-        .catch(err => {
-            res.status(400).send('adding new todo failed');
-        });
-});
-todoRoutes.route('/update/:id').post(function(req, res) {
-    Todo.findById(req.params.id, function(err, todo) {
-        if (!todo)
-            res.status(404).send("data is not found");
-        else
-            todo.todo_description = req.body.todo_description;
-            todo.todo_responsible = req.body.todo_responsible;
-            todo.todo_priority = req.body.todo_priority;
-            todo.todo_completed = req.body.todo_completed;
-
-            todo.save().then(todo => {
-                res.json('Todo updated!');
-            })
-            .catch(err => {
-                res.status(400).send("Update not possible");
-            });
-    });
+    todoTask = todo.todo_description;
+    const session = driver.session();
+    const result = await session.run(
+        `
+        CREATE (n:TODO {todo: $todoTask}) RETURN n
+      `,
+      {todoTask}
+      );
+  
+      res.send(result.records.map((record) => record.get("n")));
+      await session.close();
 });
 app.use('/todos', todoRoutes);
-if(process.env.NODE_ENV === 'production'){
-   app.use(express.static('../../build'));
-   app.get('*', (req, res)=>{
-    res.send(path.join(__dirname, '..','..','build', 'index.html'));
-   }) 
-}
 
 app.listen(PORT, function() {
     console.log("Server is running on Port: " + PORT);
     
-});
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/heroku', { useNewUrlParser: true, useCreateIndex: true, useUnifiedTopology: true });
-mongoose.connection.once('open', () => {
-    console.log("Mongodb hosted at", 'localhost', "is now connected")
-}).on('error', () => {
-    console.log("Some error prevented connecting to mongodb")
-})
-
-
-app.use(express.static("build"));
-app.get("*", (req, res) => {
-res.sendFile(path.resolve(__dirname, "build", "index.html"));
 });
