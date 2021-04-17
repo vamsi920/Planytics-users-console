@@ -2,12 +2,6 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 
-const Todo = props => (
-    <tr>
-        <td>{props.todo}</td>
-        
-    </tr>
-)
 
 export default class TodosList extends Component {
 
@@ -22,24 +16,41 @@ export default class TodosList extends Component {
     componentDidMount() {
         axios.get('http://localhost:4000/todos/')
             .then(response => {
-                
+                let dummy = [];    
                 this.setState({ todos: response.data }, ()=>{
-                    this.state.todos.map((a)=>{console.log(a.properties.todo);})
+                    
+                    this.state.todos.map((a)=>{dummy.push(a.properties.todo);})
                     
                 });
+                this.setState({todosList:dummy});
             })
             .catch(function (error){
                 console.log(error);
             })
-            console.log(this.state.todosList)
+            
+            //console.log(this.state.todosList)
     }
-
-    todoList() {
-        return this.state.todosList.map(function(currentTodo, i){
-            return <Todo todo={currentTodo.properties.todo} key={i} />;
-        })
-    }
-
+onFinish =async(taskId)=>{
+    console.log(taskId)
+    await axios.post('http://localhost:4000/todos/delete', {taskId})
+            .then((res, err) => {
+                if(err) console.log(err);
+                else console.log(res)
+            });
+            axios.get('http://localhost:4000/todos/')
+            .then(response => {
+                let dummy = [];    
+                this.setState({ todos: response.data }, ()=>{
+                    
+                    this.state.todos.map((a)=>{dummy.push(a.properties.todo);})
+                    
+                });
+                this.setState({todosList:dummy});
+            })
+            .catch(function (error){
+                console.log(error);
+            })
+}
     render() {
         return (
             <div>
@@ -47,12 +58,18 @@ export default class TodosList extends Component {
                 <table className="table table-striped" style={{ marginTop: 20 }} >
                     <thead>
                         <tr>
-                            <th>Description</th>
+                            <th>TODOs  (click on the task when done)</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        { this.todoList() }
-                    </tbody>
+                        { (this.state.todosList!==[] && this.state.todosList!==null)?(
+                            <tbody>
+                            {this.state.todosList.map((a)=>{
+                                return(<tr onClick={()=>this.onFinish(a)}>
+                                    {a}
+                                </tr>)
+                            })}
+                            </tbody>):("") }
+                    
                 </table>
             </div>
         )

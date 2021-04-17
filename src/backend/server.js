@@ -23,8 +23,7 @@ todoRoutes.route('/').get(async function (req, res) {
       await session.close();
 });
 todoRoutes.route('/add').post(async function(req, res) {
-    let todo = new Todo(req.body);
-    todoTask = todo.todo_description;
+    todoTask = req.body.todo_description;
     const session = driver.session();
     const result = await session.run(
         `
@@ -34,6 +33,21 @@ todoRoutes.route('/add').post(async function(req, res) {
       );
   
       res.send(result.records.map((record) => record.get("n")));
+      await session.close();
+});
+todoRoutes.route('/delete').post(async function(req, res) {
+
+    console.log(req.body)
+    let todo = req.body.taskId;
+    const session = driver.session();
+    const result = await session.run(
+        `
+        MATCH (n:TODO {todo: $todo}) DELETE n
+      `,
+      {todo}
+      );
+  
+      res.send("successful");
       await session.close();
 });
 app.use('/todos', todoRoutes);
