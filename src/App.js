@@ -11,7 +11,7 @@ function App() {
     <Router>
     <div className="App">
     <nav className="navbar navbar-expand-lg navbar-light bg-light">
-    <Link to="/" className="navbar-brand">MERN-Stack Todo Application</Link>
+    <Link to="/" className="navbar-brand">GraphDB App</Link>
             <div className="collpase navbar-collapse">
               <ul className="navbar-nav mr-auto">
                 <li className="navbar-item">
