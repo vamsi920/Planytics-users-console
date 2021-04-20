@@ -90,13 +90,13 @@ export default class CreateTodo extends Component {
           //console.log("Data>>>" + data);// shows that excel data is read
           jsonOfExcel= this.convertToJson(data); // shows data in json format
           jsonOfExcel = JSON.parse(jsonOfExcel)
-          console.log(jsonOfExcel.length)
-          this.setState({jsonOfExcel}, ()=>{
-              this.state.jsonOfExcel.map((a)=>{
-                if(a.Description!==' ' && a.Description!==''){axios.post('http://localhost:4000/todos/addExcel', a)}
-              })
+          axios.post('http://localhost:4000/todos/addExcelWithRelations', {jsonOfExcel})
+        //   this.setState({jsonOfExcel}, ()=>{
+        //       this.state.jsonOfExcel.map((a)=>{
+        //         if(a.Description!==' ' && a.Description!==''){axios.post('http://localhost:4000/todos/addExcel', a)}
+        //       })
               
-          })
+        //   })
         };
         reader.readAsBinaryString(f);
         

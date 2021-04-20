@@ -103,6 +103,135 @@ todoRoutes.route('/addExcel').post(async function(req, res) {
       res.send(result.records.map((record) => record.get("n")));
       await session.close();
 });
+
+todoRoutes.route('/addExcelWithRelations').post(async function(req, res) {
+  const session = driver.session();
+  let globalLevel = 0
+  let parentNode = {}
+  todoTask = req.body.jsonOfExcel;
+  for (var i = 0; i <todoTask.length; i++){ 
+    let Description = todoTask[i]['Description']
+    let ItemNo = todoTask[i]['Item No']
+    let Level = todoTask[i]['Level']
+    let Quantity = todoTask[i]['Quantity']
+    let UoM = todoTask[i]['UoM']
+    let Model = todoTask[i]['Model']
+    let Family = todoTask[i]['Family']
+    if(Description!=='' && Description!==' ')
+    {
+      if(Level==0)
+    {
+      await session.run(
+      `
+      CREATE (n:ITEM {Description: $Description}) 
+      SET n.ItemNo = $ItemNo
+      SET n.Level = $Level
+      SET n.Quantity = $Quantity
+      SET n.UoM = $UoM
+      SET n.Model = $Model
+      SET n.Family = $Family
+    `,
+    { 
+      Description,
+      ItemNo,
+      Level,
+      Quantity,
+      UoM,
+      Model,
+      Family
+    }
+    );}
+    else{
+      let diff = Level - globalLevel;
+      if(Level!=globalLevel && diff==1){
+        parentNode[Level] = todoTask[i-1]['Item No'];
+        globalLevel = Level;
+        await session.run(
+          `
+          CREATE (n:ITEM {Description: $Description}) 
+          SET n.ItemNo = $ItemNo
+          SET n.Level = $Level
+          SET n.Quantity = $Quantity
+          SET n.UoM = $UoM
+          SET n.Model = $Model
+          SET n.Family = $Family
+          WITH n
+          MATCH (m:ITEM {ItemNo:$parentItemNo })
+          CREATE (m)-[:IS_PART_OF]->(n)
+        `,
+        { 
+          Description,
+          ItemNo,
+          Level,
+          Quantity,
+          UoM,
+          Model,
+          Family,
+          parentItemNo:parentNode[Level]
+        }
+        )
+      }
+      else if(Level==globalLevel && diff==0){
+        await session.run(
+          `
+          CREATE (n:ITEM {Description: $Description}) 
+          SET n.ItemNo = $ItemNo
+          SET n.Level = $Level
+          SET n.Quantity = $Quantity
+          SET n.UoM = $UoM
+          SET n.Model = $Model
+          SET n.Family = $Family
+          WITH n
+          MATCH (m:ITEM {ItemNo:$parentItemNo })
+          CREATE (m)-[:IS_PART_OF]->(n)
+        `,
+        { 
+          Description,
+          ItemNo,
+          Level,
+          Quantity,
+          UoM,
+          Model,
+          Family,
+          parentItemNo:parentNode[Level]
+        }
+        )
+      }
+      else if(Level!==globalLevel && diff<0){
+        globalLevel = Level;
+        await session.run(
+          `
+          CREATE (n:ITEM {Description: $Description}) 
+          SET n.ItemNo = $ItemNo
+          SET n.Level = $Level
+          SET n.Quantity = $Quantity
+          SET n.UoM = $UoM
+          SET n.Model = $Model
+          SET n.Family = $Family
+          WITH n
+          MATCH (m:ITEM {ItemNo:$parentItemNo })
+          CREATE (m)-[:IS_PART_OF]->(n)
+        `,
+        { 
+          Description,
+          ItemNo,
+          Level,
+          Quantity,
+          UoM,
+          Model,
+          Family,
+          parentItemNo:parentNode[Level]
+        }
+        )
+      }
+     
+    }
+  }
+  }
+  
+  
+    await session.close();
+});
 todoRoutes.route('/delete').post(async function(req, res) {
 
     console.log(req.body)
