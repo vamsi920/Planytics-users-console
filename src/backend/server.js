@@ -4,7 +4,6 @@ var bodyParser = require('body-parser');
 const cors = require('cors');
 const PORT = process.env.PORT || 4000;
 const todoRoutes = express.Router();
-const Todo = require('./todo.js');
 
 var neo4j = require('neo4j-driver')
 const driver = neo4j.driver("bolt://localhost:7687", neo4j.auth.basic("neo4j", "todo"))
@@ -110,14 +109,11 @@ todoRoutes.route('/addExcelWithRelations').post(async function(req, res) {
   let parentNode = {}
   todoTask = req.body.jsonOfExcel;
   for (var i = 0; i <todoTask.length; i++){ 
-    let Description = todoTask[i]['Description']
-    let ItemNo = todoTask[i]['Item No']
+    var keys = {};
+    for (var k in todoTask[i]){ keys[k.split(" ").join("")] = todoTask[i][k]};
+    console.log(keys)
     let Level = todoTask[i]['Level']
-    let Quantity = todoTask[i]['Quantity']
-    let UoM = todoTask[i]['UoM']
-    let Model = todoTask[i]['Model']
-    let Family = todoTask[i]['Family']
-    if(Description!=='' && Description!==' ')
+    if(Level!=='' && Level!==' ')
     {
       if(Level==0)
     {
@@ -131,20 +127,13 @@ todoRoutes.route('/addExcelWithRelations').post(async function(req, res) {
       SET n.Model = $Model
       SET n.Family = $Family
     `,
-    { 
-      Description,
-      ItemNo,
-      Level,
-      Quantity,
-      UoM,
-      Model,
-      Family
-    }
+    keys
     );}
     else{
       let diff = Level - globalLevel;
       if(Level!=globalLevel && diff==1){
         parentNode[Level] = todoTask[i-1]['Item No'];
+        keys['parentItemNo'] = parentNode[Level]
         globalLevel = Level;
         await session.run(
           `
@@ -157,21 +146,13 @@ todoRoutes.route('/addExcelWithRelations').post(async function(req, res) {
           SET n.Family = $Family
           WITH n
           MATCH (m:ITEM {ItemNo:$parentItemNo })
-          CREATE (m)-[:IS_PART_OF]->(n)
+          CREATE (m)-[:HAS_PART_OF {Quantity: $Quantity}]->(n)
         `,
-        { 
-          Description,
-          ItemNo,
-          Level,
-          Quantity,
-          UoM,
-          Model,
-          Family,
-          parentItemNo:parentNode[Level]
-        }
+        keys
         )
       }
       else if(Level==globalLevel && diff==0){
+        keys['parentItemNo'] = parentNode[Level]
         await session.run(
           `
           CREATE (n:ITEM {Description: $Description}) 
@@ -183,21 +164,13 @@ todoRoutes.route('/addExcelWithRelations').post(async function(req, res) {
           SET n.Family = $Family
           WITH n
           MATCH (m:ITEM {ItemNo:$parentItemNo })
-          CREATE (m)-[:IS_PART_OF]->(n)
+          CREATE (m)-[:HAS_PART_OF {Quantity: $Quantity}]->(n)
         `,
-        { 
-          Description,
-          ItemNo,
-          Level,
-          Quantity,
-          UoM,
-          Model,
-          Family,
-          parentItemNo:parentNode[Level]
-        }
+        keys
         )
       }
       else if(Level!==globalLevel && diff<0){
+        keys['parentItemNo'] = parentNode[Level]
         globalLevel = Level;
         await session.run(
           `
@@ -210,18 +183,9 @@ todoRoutes.route('/addExcelWithRelations').post(async function(req, res) {
           SET n.Family = $Family
           WITH n
           MATCH (m:ITEM {ItemNo:$parentItemNo })
-          CREATE (m)-[:IS_PART_OF]->(n)
+          CREATE (m)-[:HAS_PART_OF {Quantity: $Quantity}]->(n)
         `,
-        { 
-          Description,
-          ItemNo,
-          Level,
-          Quantity,
-          UoM,
-          Model,
-          Family,
-          parentItemNo:parentNode[Level]
-        }
+        keys
         )
       }
      
