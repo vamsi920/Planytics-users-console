@@ -1,14 +1,26 @@
 const express = require('express');
 const app = express();
 var bodyParser = require('body-parser');
+const cookieSession = require('cookie-session')
 const cors = require('cors');
 const PORT = process.env.PORT || 4000;
 const todoRoutes = express.Router();
-
+const { OAuth2Client } = require('google-auth-library')
+const client = new OAuth2Client(process.env.OAuth_Client_ID)
+var GoogleStrategy = require('passport-google-oauth20').Strategy;
+const passport = require('passport');
 var neo4j = require('neo4j-driver')
 const driver = neo4j.driver("bolt://localhost:7687", neo4j.auth.basic("neo4j", "todo"))
 app.use(cors());
 app.use(bodyParser.json());
+app.use(passport.initialize());
+app.use(passport.session());
+require('./pasport-setup');
+app.use(cookieSession({
+  name: 'login-session',
+  keys: ['key1', 'key2']
+}))
+
 todoRoutes.route('/').get(async function (req, res) {
     const session = driver.session();
     const result = await session.run(
@@ -211,6 +223,40 @@ todoRoutes.route('/delete').post(async function(req, res) {
       res.send("successful");
       await session.close();
 });
+
+const isLoggedIn =(req, res, next)=>{
+  console.log(req.user)
+  if(req.user){
+    next();
+  }
+  else{
+    res.sendStatus(401)
+  }
+}
+app.get('/', (req,res)=>{res.send('not logged in')})
+app.get('/failed',(req,res)=>{
+  res.send('failed')
+})
+app.get('/good',isLoggedIn, (req,res)=>{
+  console.log(req.user)
+  res.send(`hello ${req.user.displayName}`)
+})
+app.get('/google',
+  passport.authenticate('google', { scope: ['profile','email'] }));
+
+app.get('/google/callback', 
+  passport.authenticate('google', { failureRedirect: '/failed' }),
+  function(req, res) {
+    // Successful authentication, redirect home.
+    // res.redirect('/good');
+    res.send(res.req.user)
+  });
+
+app.get('/logout',(req,res)=>{
+  req.session = null;
+  req.logout();
+  res.redirect('/')
+}) 
 app.use('/todos', todoRoutes);
 
 app.listen(PORT, function() {
