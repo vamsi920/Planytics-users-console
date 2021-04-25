@@ -246,16 +246,16 @@ app.get('/google',
 
 app.get('/google/callback', 
   passport.authenticate('google', { failureRedirect: '/failed' }),
-  function(req, res) {
+   function(req, res) {
     // Successful authentication, redirect home.
-    // res.redirect('/good');
-    res.send(res.req.user)
+     res.redirect('http://localhost:3000?userId='+res.req.user["id"]);
+
   });
 
 app.get('/logout',(req,res)=>{
   req.session = null;
   req.logout();
-  res.redirect('/')
+  res.redirect('http://localhost:3000')
 }) 
 app.use('/todos', todoRoutes);
 

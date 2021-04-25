@@ -16,9 +16,13 @@ passport.use(new GoogleStrategy({
     callbackURL: "http://localhost:4000/google/callback"
   },
   async(accessToken,refreshToken, profile, done )=>{
-    // console.log(profile)
+    // console.log('reached')
+    console.log(profile)
     let username = profile.displayName
     let userId = profile.id
+    let name = profile.name.givenName
+    let email = profile.emails[0].value
+    let provider = profile.provider
     const session = driver.session();
     const result = await session.run(
       `
@@ -32,12 +36,19 @@ passport.use(new GoogleStrategy({
     if(result.records.length===0){
       const result1 = await session.run(
               `
-              MATCH (n:USER {userId: $userId}) 
               CREATE (n:USER {userId: $userId}) 
               SET n.username = $username
-              
+              SET n.name = $name
+              SET n.email = $email
+              SET n.provider = $provider
             `,
-            {userId: userId, username: username }
+            {userId: userId, 
+            username: username,
+            name:name,
+            email:email,
+            provider:provider
+          
+          }
             );
         done(null, profile)
     }
