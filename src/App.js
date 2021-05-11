@@ -11,6 +11,7 @@ import GoogleButton from 'react-google-button';
 import SignIn from './components/login.js';
 import Notifications from './components/Notifications';
 import Users from './components/Users'
+import UserDetail from "./components/UserDetail"
 export default class App extends Component {
   state = {
     userPresent: false,
@@ -73,6 +74,7 @@ export default class App extends Component {
       <Route path="/login" component={SignIn} />
       <Route path="/Notifications" component={Notifications} />
       <Route path="/Users" component={Users} />
+      <Route path="/UserDetail/:id" component={UserDetail} />
       </div>
       </Router>
     );
