@@ -12,11 +12,18 @@ import SignIn from './components/login.js';
 import Notifications from './components/Notifications';
 import Users from './components/Users'
 import UserDetail from "./components/UserDetail"
-export default class App extends Component {
+import withFirebaseAuth from 'react-with-firebase-auth'
+import * as firebase from 'firebase/app';
+import 'firebase/auth';
+import firebaseConfig from './config';
+const firebaseApp = firebase.initializeApp(firebaseConfig);
+
+class App extends Component {
   state = {
     userPresent: false,
   }
   componentDidMount(){
+
     let userpresence = localStorage.getItem("user-cred")
     if(userpresence){
       this.setState({userPresent: true})
@@ -47,6 +54,11 @@ export default class App extends Component {
     }
    
   render(){
+    const {
+      user,
+      signOut,
+      signInWithGoogle,
+    } = this.props;
     return (
       
       <Router>
@@ -57,7 +69,18 @@ export default class App extends Component {
               <div className="collpase navbar-collapse">
                 <ul className="navbar-nav mr-auto">
                   <li className="navbar-item">
-                    <Link to="/login" className="nav-link">Login</Link>
+                    {/* <Link to="/login" className="nav-link">Login</Link> */}
+                    {
+            user
+              ? <p>Hello, {user.displayName}</p>
+              : <p>Please sign in.</p>
+          }
+
+          {
+            user
+              ? <button onClick={signOut}>Sign out</button>
+              : <button onClick={signInWithGoogle}>Sign in with Google</button>
+          }
                   </li>
                 </ul>
               </div>
@@ -81,4 +104,12 @@ export default class App extends Component {
   }
   
 }
+const firebaseAppAuth = firebaseApp.auth();
+const providers = {
+  googleProvider: new firebase.auth.GoogleAuthProvider(),
+};
+export default withFirebaseAuth({
+  providers,
+  firebaseAppAuth,
+})(App);
 

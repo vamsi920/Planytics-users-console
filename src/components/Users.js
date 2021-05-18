@@ -4,98 +4,63 @@ import axios from "axios";
 import { ProSidebar, Menu, MenuItem, SubMenu } from "react-pro-sidebar";
 import "react-pro-sidebar/dist/css/styles.css";
 import { LinkContainer } from 'react-router-bootstrap'
-
+import Card from 'react-bootstrap/Card'
+import { FirebaseDatabaseProvider } from "@react-firebase/database";
+import Firebase from 'firebase';
+import firebaseConfig from '../config';
 export default class Users extends Component {
-  state = {
-    data: [],
-    per: 9,
-    page: 1,
-    total_pages: null
-  };
+  constructor(props){
+    super(props);
+    if (!Firebase.apps.length) {
+      Firebase.initializeApp(firebaseConfig.firebase);
+   }else {
+    Firebase.app(); // if already initialized, use that one
+   }
+    
+
+    this.state = {
+      data: [],
+    }
+  }
 
   uppercase = word => {
     return word.charAt(0).toUpperCase() + word.slice(1);
   };
 
-  loadData = () => {
-    const { per, page, data } = this.state;
-    const endpoint = `https://randomuser.me/api/?nat=us&results=${per}&page=${page}`;
-    fetch(endpoint)
-      .then(response => response.json())
-      .then(json => {
-        this.setState({
-          data: [...data, ...json.results],
-          scrolling: false,
-          total_pages: json.info.results
-        });
-      });
-  };
-
-  loadMore = () => {
-    this.setState(
-      prevState => ({
-        page: prevState.page + 1,
-        scrolling: true
-      }),
-      this.loadData
-    );
-  };
-
-  componentDidMount() {
-    this.loadData();
+  componentDidMount(){
+    let org = [{
+      "id":"1",
+      "name":"apolo store 1",
+      "address":'chennai',
+      "users":[
+        {"id":"1.1","units":["unit1", "unit2", "unit3"]},
+        {"id":"1.2", "units":["unit1", "unit6", "unit5"]}
+      ]
+    }]
+    this.setState({data:org},()=>{
+      // Firebase.database().ref('/').set(this.state);
+      console.log('DATA SAVED');
+    })
   }
 
   render() {
     return (
-      <div className="clearfix">
-        <div className="row">
+      <div style={{display:'flex', flexDirection:'row', marginTop:20, marginLeft:20}}>
           {this.state.data.map(data => (
-            
-              
-            <div className="col-md-4 animated fadeIn" key={data.id.value}>
-              <div className="card">
-              <LinkContainer to={{
-              pathname: `/UserDetail/${data.id.value}`,
+            <LinkContainer to={{
+              pathname: `/UserDetail/${data.id}`,
               data: data,
            }} >
-              <a href={`/UserDetail/${data.id.value}`}>
-
-                <div className="card-body">
-                  <div className="avatar">
-                    {/* <img
-                      src={data.picture.large}
-                      className="card-img-top"
-                      alt=""
-                    /> */}
-                  </div>
-                  <h5 className="card-title">
-                    {this.uppercase(data.name.first) +
-                      " " +
-                      this.uppercase(data.name.last)}
-                  </h5>
-                  <p className="card-text">
-                    {data.location.city +
-                      ", " +
-                      this.uppercase(data.location.state)}
-                    <br />
-                    <span className="phone">{data.phone}</span>
-                  </p>
-                </div>
-                </a>
+            <Card style={{ width: '18rem' }}>
+            <Card.Body>
+              <Card.Title>{data.name}</Card.Title>
+              <Card.Text>
+                {data.address}
+              </Card.Text>
+            </Card.Body>
+          </Card>
           </LinkContainer>
-              </div>
-            </div>
-           
           ))}
-        </div>
-        <button
-          className="btn btn-light btn-block w-50 mx-auto"
-          onClick={e => {
-            this.loadMore();
-          }}
-        >
-          Load More Users
-        </button>
       </div>
     );
   }
