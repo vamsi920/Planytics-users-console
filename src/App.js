@@ -89,7 +89,7 @@ class App extends Component {
             <br/>
             <ProSidebar>
           <Menu iconShape="square">
-            <MenuItem ><Link to="/Users" className="navbar-brand">Users</Link></MenuItem>
+            <MenuItem ><Link to="/Users" className="navbar-brand">Organisation</Link></MenuItem>
             <MenuItem><Link to="/Notifications" className="navbar-brand">Notification</Link></MenuItem>
           </Menu>
         </ProSidebar>
