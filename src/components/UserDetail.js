@@ -26,7 +26,10 @@ export default class UserDetail extends Component {
       url:'',
       name:'',
       username:'',
-      uData:{}
+      uData:{},
+      email: '',
+      password: '',
+      error: null,
     }
   }
 componentDidMount(){
@@ -57,14 +60,17 @@ componentDidMount(){
           let organisation = doc.data();
           unitsArray.push(organisation);
           this.setState({ dataU:unitsArray },()=>{
+            console.log(this.state.dataU)
             let rData={};
-            
+            for(let i=0; i<this.state.dataU.length; i++){
+              rData[this.state.dataU[i].unitId]=[]
+              
+            }
               for(let i=0; i<this.state.dataU.length; i++){
-                rData[this.state.dataU[i].unitId]=[]
                 rData[this.state.dataU[i].unitId].push(this.state.dataU[i]);
                 
               }
-              this.setState({uData:rData})
+              this.setState({uData:rData}, ()=>console.log(this.state.uData))
           } ) 
       });
 
@@ -78,6 +84,33 @@ handleChangeName=(event)=> {
 handleChangeUserName=(event)=> {
   this.setState({username: event.target.value});
 }
+handleInputChange = (event) => {
+  this.setState({ [event.target.name]: event.target.value })
+};
+handleSubmitFirebase = ( i) => {
+  console.log('reached')
+  const { email, password } = this.state;
+Firebase
+    .auth()
+    .createUserWithEmailAndPassword(email, password)
+    .then((user) => {
+      console.log(user)
+      const db = Firebase.firestore();
+      const ref = db.collection('users').doc()
+      console.log(ref.id)  // prints the unique id
+      ref.set({
+        id: ref.id,
+        emai:this.state.email,
+        name:this.state.username,
+        unitId:i
+      })     
+    
+      alert('user added, please refresh the page')
+    })
+    .catch((error) => {
+      this.setState({ error: error });
+    });
+};
 handleSubmit=()=> {
   ////push data
   const db = Firebase.firestore();
@@ -143,8 +176,8 @@ handleSubmitUserName=(i)=>{
                     <p >unit name: {data.name}</p>
                     <p>users:</p>
 
-                    {(this.state.uData[data.id]!==undefined)?(this.state.uData[data.id].map((u, index)=>(
-                      <p>{index+1 + ". "+ u.name}</p>
+                    {(this.state.uData[data.id]!==undefined)?(this.state.uData[data.id].map((u)=>(
+                      <p>{ ">. "+ u.name}</p>
                     ))):('')}
                     <Accordion>
                       <Card>
@@ -155,13 +188,25 @@ handleSubmitUserName=(i)=>{
                         </Card.Header>
                         <Accordion.Collapse eventKey="0">
                           <Card.Body>
-                          <form >
+                          {/* <form >
                             <label>
                               user name
                               <input type="text" value={this.state.username} onChange={this.handleChangeUserName} />
                             </label>
                           </form>
-                          <Button onClick={()=>{this.handleSubmitUserName(data.id)}}>add</Button>
+                          <Button onClick={()=>{this.handleSubmitUserName(data.id)}}>add</Button> */}
+                          <form >
+                          <input type="text" value={this.state.username} placeholder="username" onChange={this.handleChangeUserName} />
+                          <input type="text" name="email" placeholder="Email" value={this.state.email} onChange={this.handleInputChange} />
+                            <input
+                              type="password"
+                              name="password"
+                              placeholder="Password"
+                              value={this.state.password}
+                              onChange={this.handleInputChange}
+                            />
+                            <Button children="Register" onClick={()=>this.handleSubmitFirebase((data.id))} />
+                          </form>
                           </Card.Body>
                         </Accordion.Collapse>
                       </Card>
