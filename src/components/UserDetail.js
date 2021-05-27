@@ -60,7 +60,7 @@ componentDidMount(){
           let organisation = doc.data();
           unitsArray.push(organisation);
           this.setState({ dataU:unitsArray },()=>{
-            console.log(this.state.dataU)
+            // console.log(this.state.dataU)
             let rData={};
             for(let i=0; i<this.state.dataU.length; i++){
               rData[this.state.dataU[i].unitId]=[]
@@ -70,7 +70,7 @@ componentDidMount(){
                 rData[this.state.dataU[i].unitId].push(this.state.dataU[i]);
                 
               }
-              this.setState({uData:rData}, ()=>console.log(this.state.uData))
+              this.setState({uData:rData})
           } ) 
       });
 
@@ -88,18 +88,18 @@ handleInputChange = (event) => {
   this.setState({ [event.target.name]: event.target.value })
 };
 handleSubmitFirebase = ( i) => {
-  console.log('reached')
+  // console.log('reached')
   const { email, password } = this.state;
 Firebase
     .auth()
     .createUserWithEmailAndPassword(email, password)
     .then((user) => {
-      console.log(user)
+      console.log(user.user.uid)
       const db = Firebase.firestore();
-      const ref = db.collection('users').doc()
-      console.log(ref.id)  // prints the unique id
+      const ref = db.collection('users').doc(user.user.uid)
+      //console.log(ref.id)  // prints the unique id
       ref.set({
-        id: ref.id,
+        id: user.user.uid,
         emai:this.state.email,
         name:this.state.username,
         unitId:i
@@ -115,7 +115,7 @@ handleSubmit=()=> {
   ////push data
   const db = Firebase.firestore();
   const ref = db.collection('units').doc()
-    console.log(ref.id)  // prints the unique id
+    //console.log(ref.id)  // prints the unique id
     ref.set({
       id: ref.id,
       name:this.state.name,

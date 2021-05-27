@@ -22,8 +22,16 @@ class App extends Component {
   state = {
     userPresent: false,
   }
-  componentDidMount(){
+  componentDidMount(){  
+    // const messaging = firebase.messaging()
+    // messaging.requestPermission().then((token)=>{
+    //   return messaging.getToken()
 
+    // }).then(token=>{
+    //   console.log(token , 'token')
+    // }).catch((e)=>{
+    //   console.log(e)
+    // })
     let userpresence = localStorage.getItem("user-cred")
     if(userpresence){
       this.setState({userPresent: true})
